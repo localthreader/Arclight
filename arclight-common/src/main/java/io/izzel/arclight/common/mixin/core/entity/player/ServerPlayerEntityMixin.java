@@ -499,11 +499,14 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntityMixin implemen
                 Entity e = teleporter.placeEntity((ServerPlayerEntity) (Object) this, serverworld, exitWorld[0], this.rotationYaw, spawnPortal -> {//Forge: Start vanilla logic
                     serverworld.getProfiler().startSection("moving");
 
-                    exitWorld[0] = ((PortalInfoBridge) portalinfo).bridge$getWorld();
+                    if (((PortalInfoBridge) portalinfo).bridge$getWorld() != null) {
+                        exitWorld[0] = ((PortalInfoBridge) portalinfo).bridge$getWorld();
+                    }
                     if (exitWorld[0] != null) {
                         if (registrykey == DimensionType.OVERWORLD && ((WorldBridge) exitWorld[0]).bridge$getTypeKey() == DimensionType.THE_NETHER) {
                             this.enteredNetherPosition = this.getPositionVec();
-                        } else if (spawnPortal && ((WorldBridge) exitWorld[0]).bridge$getTypeKey() == DimensionType.THE_END && ((PortalInfoBridge) portalinfo).bridge$getPortalEventInfo().getCanCreatePortal()) {
+                        } else if (spawnPortal && ((WorldBridge) exitWorld[0]).bridge$getTypeKey() == DimensionType.THE_END
+                            && (((PortalInfoBridge) portalinfo).bridge$getPortalEventInfo() == null || ((PortalInfoBridge) portalinfo).bridge$getPortalEventInfo().getCanCreatePortal())) {
                             this.func_242110_a(exitWorld[0], new BlockPos(portalinfo.pos));
                         }
                     }
@@ -555,7 +558,9 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntityMixin implemen
                     this.connection.sendPacket(new SPlayEntityEffectPacket(this.getEntityId(), effectinstance));
                 }
 
-                this.connection.sendPacket(new SPlaySoundEventPacket(1032, BlockPos.ZERO, 0, false));
+                if (teleporter.playTeleportSound((ServerPlayerEntity) (Object) this, serverworld, exitWorld[0])) {
+                    this.connection.sendPacket(new SPlaySoundEventPacket(1032, BlockPos.ZERO, 0, false));
+                }
                 this.lastExperience = -1;
                 this.lastHealth = -1.0F;
                 this.lastFoodLevel = -1;
@@ -765,11 +770,11 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntityMixin implemen
             PlayerChangedMainHandEvent event = new PlayerChangedMainHandEvent(this.getBukkitEntity(), (this.getPrimaryHand() == HandSide.LEFT) ? MainHand.LEFT : MainHand.RIGHT);
             Bukkit.getPluginManager().callEvent(event);
         }
-        if (!this.language.equals(packetIn.getLanguage())) {
-            PlayerLocaleChangeEvent event2 = new PlayerLocaleChangeEvent(this.getBukkitEntity(), packetIn.getLanguage());
+        if (!this.language.equals(packetIn.getLang())) {
+            PlayerLocaleChangeEvent event2 = new PlayerLocaleChangeEvent(this.getBukkitEntity(), packetIn.getLang());
             Bukkit.getPluginManager().callEvent(event2);
         }
-        this.locale = packetIn.getLanguage();
+        this.locale = packetIn.getLang();
         this.clientViewDistance = packetIn.view;
     }
 

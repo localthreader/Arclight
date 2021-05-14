@@ -30,6 +30,15 @@ arclight {
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
+sourceSets {
+    applaunch {
+        java {
+            compileClasspath += main.output
+            runtimeClasspath += main.output
+        }
+    }
+}
+
 configurations {
     embed
     implementation.extendsFrom(embed)
@@ -56,7 +65,7 @@ def embedLibs = [/*'org.spongepowered:mixin:0.8.1',*/ 'org.ow2.asm:asm-util:9.0'
                  'org.ow2.asm:asm-analysis:9.0', 'org.yaml:snakeyaml:1.27',
                  'org.xerial:sqlite-jdbc:3.34.0', 'mysql:mysql-connector-java:5.1.49',
                  'commons-lang:commons-lang:2.6', 'com.googlecode.json-simple:json-simple:1.1.1',
-                 'org.apache.logging.log4j:log4j-jul:2.11.2', 'net.md-5:SpecialSource:1.8.6',
+                 'org.apache.logging.log4j:log4j-jul:2.11.2', 'net.md-5:SpecialSource:1.9.0',
                  'org.jline:jline-terminal-jansi:3.12.1', 'org.fusesource.jansi:jansi:1.18',
                  'org.jline:jline-terminal:3.12.1', 'org.jline:jline-reader:3.12.1',
                  'jline:jline:2.12.1']
@@ -75,7 +84,7 @@ dependencies {
     embed 'net.md-5:bungeecord-chat:1.16-R0.4@jar'
     embed "org.spigotmc:spigot-api:$minecraftVersion-R0.1-SNAPSHOT@jar"
     embed 'com.github.ArclightTeam:mixin-tools:1.0.0@jar'
-    embed 'io.izzel:tools:1.0.+'
+    embed 'io.izzel:tools:1.1.+'
     annotationProcessor 'org.spongepowered:mixin:0.8.2:processor'
     annotationProcessor 'com.github.ArclightTeam:mixin-tools:1.0.0'
 }
@@ -97,11 +106,13 @@ processResources {
 
 jar {
     manifest.attributes 'MixinConnector': 'io.izzel.arclight.impl.ArclightConnector_1_16'
-    manifest.attributes 'Main-Class': 'io.izzel.arclight.server.Main_1_16'
+    manifest.attributes 'Main-Class': 'io.izzel.arclight.server.Launcher'
     manifest.attributes 'Implementation-Title': 'Arclight'
     manifest.attributes 'Implementation-Version': "arclight-$minecraftVersion-${project.version}-${getGitHash()}"
     manifest.attributes 'Implementation-Vendor': 'Arclight Team'
     manifest.attributes 'Implementation-Timestamp': new Date().format("yyyy-MM-dd HH:mm:ss")
+    manifest.attributes 'Add-Opens': 'java.base/sun.security.util java.base/java.util.jar'
+    manifest.attributes 'Add-Exports': 'java.base/sun.security.util'
     from(configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }) {
         exclude "META-INF/MANIFEST.MF"
         exclude "META-INF/*.SF"
@@ -110,6 +121,7 @@ jar {
         exclude "LICENSE.txt"
     }
     from(project(':arclight-common').tasks.jar.outputs.files.collect { it.isDirectory() ? it : zipTree(it) })
+    from sourceSets.applaunch.output.classesDirs
 }
 
 remapSpigotJar {
@@ -124,6 +136,10 @@ mixin {
 compileJava {
     options.compilerArgs << '-XDignore.symbol.file' << '-XDenableSunApiLintControl'
     options.encoding = 'UTF-8'
+}
+
+compileApplaunchJava {
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_6
 }
 
 task srgJar(type: Jar) {
