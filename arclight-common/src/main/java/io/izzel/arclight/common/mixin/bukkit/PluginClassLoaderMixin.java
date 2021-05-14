@@ -76,6 +76,7 @@ public class PluginClassLoaderMixin extends URLClassLoader implements RemappingC
                     Callable<byte[]> byteSource;
                     try {
                         connection = url.openConnection();
+                        connection.setUseCaches(false);
                         connection.connect();
                         byteSource = () -> {
                             try (InputStream is = connection.getInputStream()) {
